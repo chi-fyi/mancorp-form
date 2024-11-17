@@ -193,7 +193,7 @@ class TypeformQuestions {
         }, 600);
     }
 
-    handleSubmit(e) {
+    async handleSubmit(e) {
         e.preventDefault();
         const nameInput = document.getElementById('contact-name');
         const phoneInput = document.getElementById('contact-phone');
@@ -204,11 +204,45 @@ class TypeformQuestions {
             this.answers.contactPhone = phoneInput.value;
             this.answers.contactEmail = emailInput.value;
             
-            // Here you would typically send the data to your server
-            console.log('Form submitted:', this.answers);
+            // Show loading state
+            const submitBtn = document.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Submitting...';
+            submitBtn.disabled = true;
             
-            // Show success message or redirect
-            alert('Thank you! Your cleaning request has been submitted.');
+            try {
+                const response = await fetch('/.netlify/functions/sendToGoogleSheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        area: this.answers.area,
+                        cleaningType: this.answers.cleaningType,
+                        contactName: this.answers.contactName,
+                        contactPhone: this.answers.contactPhone,
+                        contactEmail: this.answers.contactEmail || 'Not provided'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                // Show success message
+                alert('Thank you! Your cleaning request has been submitted.');
+                
+                // Reset form
+                this.resetForm();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Sorry, there was an error submitting your request. Please try again.');
+            } finally {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         } else {
             if (!nameInput.value.trim()) nameInput.classList.add('error');
             if (!phoneInput.value.trim()) phoneInput.classList.add('error');
@@ -219,6 +253,14 @@ class TypeformQuestions {
             }, 1000);
         }
     }
+
+    resetForm() {
+        this.answers = {};
+        this.showQuestion(1);
+        document.querySelectorAll('.text-input').forEach(input => input.value = '');
+        document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+    }
+
 
     showQuestion(number) {
         if (number < 1 || number > this.totalQuestions) return;
