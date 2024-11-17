@@ -4,22 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Typeform Clone</title>
+    <meta name="description" content="Cleaning request submission form">
+    <title>Cleaning Request Form</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <form id="typeform" method="POST" action="">
-        <div class="main-content">
+    <form id="typeform" method="POST" action="/.netlify/functions/sendToGoogleSheets" onsubmit="return false;">
+        <main class="main-content" role="main" aria-live="polite">
             <!-- Questions will be inserted here by JavaScript -->
-        </div>
+        </main>
     
-        <div class="navigation">
-            <button class="nav-button prev-button" aria-label="Previous question">↑</button>
-            <button class="nav-button next-button" aria-label="Next question">↓</button>
+        <nav class="navigation" aria-label="Form navigation">
+            <button type="button" class="nav-button prev-button" aria-label="Previous question">
+                <span aria-hidden="true">↑</span>
+            </button>
+            <button type="button" class="nav-button next-button" aria-label="Next question">
+                <span aria-hidden="true">↓</span>
+            </button>
+        </nav>
+
+        <!-- Loading spinner (hidden by default) -->
+        <div id="loading-spinner" class="loading-spinner" hidden>
+            <div class="spinner"></div>
+            <span>Submitting...</span>
         </div>
     </form>
-<script src="script.js"></script>
 
+    <!-- Add error handling toast/notification container -->
+    <div id="notification" class="notification" role="alert" aria-live="assertive"></div>
+
+    <script src="script.js"></script>
 </body>
-
 </html>
