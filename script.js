@@ -1,3 +1,21 @@
+// Add these helper functions at the top of the file, before the TypeformQuestions class
+const showLoading = () => {
+    document.getElementById('loading-spinner').hidden = false;
+};
+
+const hideLoading = () => {
+    document.getElementById('loading-spinner').hidden = true;
+};
+
+const showNotification = (message, type = 'success') => {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification show ${type}`;
+    setTimeout(() => {
+        notification.className = 'notification';
+    }, 3000);
+};
+
 class TypeformQuestions {
     constructor() {
         this.currentQuestion = 1;
@@ -205,9 +223,8 @@ class TypeformQuestions {
             this.answers.contactEmail = emailInput.value;
             
             // Show loading state
+            showLoading();
             const submitBtn = document.querySelector('.submit-btn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Submitting...';
             submitBtn.disabled = true;
             
             try {
@@ -231,21 +248,23 @@ class TypeformQuestions {
                 }
 
                 // Show success message
-                alert('Thank you! Your cleaning request has been submitted.');
+                showNotification('Thank you! Your cleaning request has been submitted.');
                 
                 // Reset form
                 this.resetForm();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Sorry, there was an error submitting your request. Please try again.');
+                showNotification('Sorry, there was an error submitting your request. Please try again.', 'error');
             } finally {
                 // Reset button state
-                submitBtn.textContent = originalText;
+                hideLoading();
                 submitBtn.disabled = false;
             }
         } else {
             if (!nameInput.value.trim()) nameInput.classList.add('error');
             if (!phoneInput.value.trim()) phoneInput.classList.add('error');
+            
+            showNotification('Please fill in all required fields.', 'error');
             
             setTimeout(() => {
                 nameInput.classList.remove('error');
@@ -310,6 +329,10 @@ class TypeformQuestions {
         if (this.currentQuestion > 1) {
             this.showQuestion(this.currentQuestion - 1);
         }
+        
+    }
+    manualNextQuestion() {
+        this.nextQuestion();
     }
 }
 
