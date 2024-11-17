@@ -1,14 +1,18 @@
-// Add these helper functions at the top of the file, before the TypeformQuestions class
+// Helper functions
 const showLoading = () => {
-    document.getElementById('loading-spinner').hidden = false;
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.hidden = false;
 };
 
 const hideLoading = () => {
-    document.getElementById('loading-spinner').hidden = true;
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.hidden = true;
 };
 
 const showNotification = (message, type = 'success') => {
     const notification = document.getElementById('notification');
+    if (!notification) return;
+    
     notification.textContent = message;
     notification.className = `notification show ${type}`;
     setTimeout(() => {
@@ -21,17 +25,39 @@ class TypeformQuestions {
         this.currentQuestion = 1;
         this.totalQuestions = 3;
         this.answers = {};
-        this.init();
+        // Initialize after DOM is fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
     }
 
     init() {
+        // First, add the main container if it doesn't exist
+        let mainContent = document.querySelector('.main-content');
+        if (!mainContent) {
+            mainContent = document.createElement('div');
+            mainContent.className = 'main-content';
+            document.body.appendChild(mainContent);
+        }
+
         // Add the questions HTML
-        document.querySelector('.main-content').innerHTML = this.createQuestionsHTML();
+        mainContent.innerHTML = this.createQuestionsHTML();
+        
+        // Add navigation buttons
+        const navigation = document.createElement('div');
+        navigation.className = 'navigation';
+        navigation.innerHTML = `
+            <button class="nav-button prev-button">↑</button>
+            <button class="nav-button next-button">↓</button>
+        `;
+        document.body.appendChild(navigation);
         
         // Show first question
         this.showQuestion(1);
         
-        // Add event listeners
+        // Setup event listeners after DOM is ready
         this.setupEventListeners();
     }
 
@@ -138,15 +164,19 @@ class TypeformQuestions {
     }
 
     setupEventListeners() {
+        const mainContent = document.querySelector('.main-content');
+        if (!mainContent) return;
+
         // Handle radio button selections
-        document.querySelector('.main-content').addEventListener('change', (e) => {
+        mainContent.addEventListener('change', (e) => {
             if (e.target.type === 'radio') {
                 this.handleRadioSelection(e);
             }
         });
 
-        // Handle continue button clicks for text inputs
-        document.querySelectorAll('.continue-btn').forEach(button => {
+        // Handle continue button clicks
+        const continueButtons = document.querySelectorAll('.continue-btn');
+        continueButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const inputId = e.target.getAttribute('data-for');
                 this.handleTextInputContinue(inputId);
@@ -154,12 +184,14 @@ class TypeformQuestions {
         });
 
         // Handle submit button
-        document.querySelector('.submit-btn').addEventListener('click', (e) => {
-            this.handleSubmit(e);
-        });
+        const submitButton = document.querySelector('.submit-btn');
+        if (submitButton) {
+            submitButton.addEventListener('click', (e) => this.handleSubmit(e));
+        }
 
         // Handle text input enter key
-        document.querySelectorAll('.text-input').forEach(input => {
+        const textInputs = document.querySelectorAll('.text-input');
+        textInputs.forEach(input => {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     if (input.id === 'area') {
@@ -170,11 +202,18 @@ class TypeformQuestions {
                 }
             });
         });
-      
+
         // Navigation buttons
-        document.querySelector('.prev-button').addEventListener('click', () => this.previousQuestion());
-        document.querySelector('.next-button').addEventListener('click', () => this.manualNextQuestion());
+        const prevButton = document.querySelector('.prev-button');
+        const nextButton = document.querySelector('.next-button');
         
+        if (prevButton) {
+            prevButton.addEventListener('click', () => this.previousQuestion());
+        }
+        if (nextButton) {
+            nextButton.addEventListener('click', () => this.manualNextQuestion());
+        }
+
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp') {
@@ -183,15 +222,14 @@ class TypeformQuestions {
                 this.manualNextQuestion();
             }
         });
-
     }
 
     handleTextInputContinue(inputId) {
         const input = document.getElementById(inputId);
-        if (input.value.trim()) {
+        if (input && input.value.trim()) {
             this.answers[inputId] = input.value;
             this.nextQuestion();
-        } else {
+        } else if (input) {
             input.classList.add('error');
             setTimeout(() => input.classList.remove('error'), 1000);
         }
@@ -203,12 +241,14 @@ class TypeformQuestions {
         
         // Add selection animation
         const radioLabel = option.nextElementSibling;
-        radioLabel.classList.add('selected');
-        
-        // Move to next question after delay
-        setTimeout(() => {
-            this.nextQuestion();
-        }, 600);
+        if (radioLabel) {
+            radioLabel.classList.add('selected');
+            
+            // Move to next question after delay
+            setTimeout(() => {
+                this.nextQuestion();
+            }, 600);
+        }
     }
 
     async handleSubmit(e) {
@@ -217,15 +257,17 @@ class TypeformQuestions {
         const phoneInput = document.getElementById('contact-phone');
         const emailInput = document.getElementById('contact-email');
 
+        if (!nameInput || !phoneInput) return;
+
         if (nameInput.value.trim() && phoneInput.value.trim()) {
             this.answers.contactName = nameInput.value;
             this.answers.contactPhone = phoneInput.value;
-            this.answers.contactEmail = emailInput.value;
+            this.answers.contactEmail = emailInput ? emailInput.value : '';
             
             // Show loading state
             showLoading();
             const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.disabled = true;
+            if (submitBtn) submitBtn.disabled = true;
             
             try {
                 const response = await fetch('/.netlify/functions/sendToGoogleSheets', {
@@ -256,19 +298,19 @@ class TypeformQuestions {
                 console.error('Error:', error);
                 showNotification('Sorry, there was an error submitting your request. Please try again.', 'error');
             } finally {
-                // Reset button state
+                // Reset button state and hide loading
                 hideLoading();
-                submitBtn.disabled = false;
+                if (submitBtn) submitBtn.disabled = false;
             }
         } else {
-            if (!nameInput.value.trim()) nameInput.classList.add('error');
-            if (!phoneInput.value.trim()) phoneInput.classList.add('error');
+            if (nameInput && !nameInput.value.trim()) nameInput.classList.add('error');
+            if (phoneInput && !phoneInput.value.trim()) phoneInput.classList.add('error');
             
             showNotification('Please fill in all required fields.', 'error');
             
             setTimeout(() => {
-                nameInput.classList.remove('error');
-                phoneInput.classList.remove('error');
+                if (nameInput) nameInput.classList.remove('error');
+                if (phoneInput) phoneInput.classList.remove('error');
             }, 1000);
         }
     }
@@ -276,10 +318,13 @@ class TypeformQuestions {
     resetForm() {
         this.answers = {};
         this.showQuestion(1);
-        document.querySelectorAll('.text-input').forEach(input => input.value = '');
-        document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+        document.querySelectorAll('.text-input').forEach(input => {
+            if (input) input.value = '';
+        });
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            if (radio) radio.checked = false;
+        });
     }
-
 
     showQuestion(number) {
         if (number < 1 || number > this.totalQuestions) return;
@@ -329,8 +374,8 @@ class TypeformQuestions {
         if (this.currentQuestion > 1) {
             this.showQuestion(this.currentQuestion - 1);
         }
-        
     }
+
     manualNextQuestion() {
         this.nextQuestion();
     }
