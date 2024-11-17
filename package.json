@@ -4,6 +4,15 @@
     "description": "Cleaning request form with Google Sheets integration",
     "main": "index.js",
     "dependencies": {
-      "googleapis": "^128.0.0"
+        "googleapis": "^128.0.0"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "dotenv": "^16.4.5"
     }
-  }
+}

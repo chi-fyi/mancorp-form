@@ -71,7 +71,7 @@ exports.handler = async (event, context) => {
         // Append data to Google Sheets
         await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.GOOGLE_SHEET_ID,
-            range: 'Sheet1!A:F',
+            range: 'MancorpForm!A:F',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [rowData]
