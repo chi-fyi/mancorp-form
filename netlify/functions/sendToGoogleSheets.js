@@ -1,4 +1,3 @@
-// functions/sendToGoogleSheets.js
 const { google } = require('googleapis');
 
 exports.handler = async (event, context) => {
@@ -17,15 +16,15 @@ exports.handler = async (event, context) => {
         };
     }
 
-    try {
-        if (event.httpMethod !== 'POST') {
-            return {
-                statusCode: 405,
-                headers,
-                body: JSON.stringify({ error: 'Method not allowed' })
-            };
-        }
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
 
+    try {
         // Parse form data
         const data = JSON.parse(event.body);
 
@@ -35,6 +34,16 @@ exports.handler = async (event, context) => {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({ error: 'Missing required fields' })
+            };
+        }
+
+        // Verify environment variables
+        if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_SHEET_ID) {
+            console.error('Missing required environment variables');
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Server configuration error' })
             };
         }
 
@@ -48,22 +57,21 @@ exports.handler = async (event, context) => {
         });
 
         const sheets = google.sheets({ version: 'v4', auth });
-        const spreadsheetId = process.env.GOOGLE_SHEET_ID;
         
         // Format data for sheets
         const rowData = [
-            data.timestamp,
+            data.timestamp || new Date().toISOString(),
             data.area,
             data.cleaningType,
             data.contactName,
             data.contactPhone,
-            data.contactEmail
+            data.contactEmail || ''
         ];
 
         // Append data to Google Sheets
         await sheets.spreadsheets.values.append({
-            spreadsheetId,
-            range: 'Sheet1!A:F', // Updated range to match all columns
+            spreadsheetId: process.env.GOOGLE_SHEET_ID,
+            range: 'Sheet1!A:F',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [rowData]
@@ -80,7 +88,7 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Failed to add data to Google Sheets' })
+            body: JSON.stringify({ error: 'Failed to add data to Google Sheets', details: error.message })
         };
     }
 };
