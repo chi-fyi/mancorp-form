@@ -5,3 +5,10 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# rule to handle redirects
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true

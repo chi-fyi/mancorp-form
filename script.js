@@ -256,9 +256,9 @@ class TypeformQuestions {
         const nameInput = document.getElementById('contact-name');
         const phoneInput = document.getElementById('contact-phone');
         const emailInput = document.getElementById('contact-email');
-
+    
         if (!nameInput || !phoneInput) return;
-
+    
         if (nameInput.value.trim() && phoneInput.value.trim()) {
             this.answers.contactName = nameInput.value;
             this.answers.contactPhone = phoneInput.value;
@@ -284,11 +284,13 @@ class TypeformQuestions {
                         contactEmail: this.answers.contactEmail || 'Not provided'
                     })
                 });
-
+    
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
+    
+                const result = await response.json();
+                
                 // Show success message
                 showNotification('Thank you! Your cleaning request has been submitted.');
                 
