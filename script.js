@@ -274,6 +274,7 @@ class TypeformQuestions {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         timestamp: new Date().toISOString(),
