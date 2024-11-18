@@ -50,8 +50,8 @@ exports.handler = async (event, context) => {
         const sanitizedData = {
             timestamp: data.timestamp || new Date().toISOString(),
             area: String(data.area).trim(),
-            cleaningType: String(data.cleaningType).trim(),
-            contactName: String(data.contactName).trim(),
+            cleaningType: String(data.cleaningType),
+            contactName: String(data.contactName),
             contactPhone: String(data.contactPhone).trim(),
             contactEmail: data.contactEmail ? String(data.contactEmail).trim() : ''
         };
