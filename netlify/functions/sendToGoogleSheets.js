@@ -1,7 +1,8 @@
 const { google } = require('googleapis');
 
 exports.handler = async (event, context) => {
-    // 1. Consistent headers for all responses
+    console.log('Starting function execution...');
+    
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Accept, Origin',
@@ -9,19 +10,14 @@ exports.handler = async (event, context) => {
         'Content-Type': 'application/json'
     };
 
-    // 2. Better method validation
-    console.log('Function triggered with method:', event.httpMethod);
-    
-    // 3. Improved OPTIONS handling
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 204,
             headers,
-            body: '' // Explicitly set empty body
+            body: ''
         };
     }
 
-    // 4. Strict method checking
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -30,28 +26,13 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // 5. Environment variable validation
-    const requiredEnvVars = ['GOOGLE_CLIENT_EMAIL', 'GOOGLE_PRIVATE_KEY', 'GOOGLE_SHEET_ID'];
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
-    if (missingVars.length > 0) {
-        console.error('Missing required environment variables:', missingVars);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Server configuration error' })
-        };
-    }
-
     try {
-        // 6. Input validation
         if (!event.body) {
             throw new Error('No request body provided');
         }
 
         const data = JSON.parse(event.body);
         
-        // 7. Required field validation
         const requiredFields = ['area', 'cleaningType', 'contactName', 'contactPhone'];
         const missingFields = requiredFields.filter(field => !data[field]);
         
@@ -66,7 +47,6 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // 8. Data sanitization
         const sanitizedData = {
             timestamp: data.timestamp || new Date().toISOString(),
             area: String(data.area).trim(),
@@ -76,18 +56,14 @@ exports.handler = async (event, context) => {
             contactEmail: data.contactEmail ? String(data.contactEmail).trim() : ''
         };
 
-        // 9. Initialize Google Sheets with error handling
+        const key = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
         const auth = new google.auth.GoogleAuth({
-            credentials: {
-                client_email: process.env.GOOGLE_CLIENT_EMAIL,
-                private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-            },
-            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+            credentials: key,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
-
-        const sheets = google.sheets({ version: 'v4', auth });
+        const client = await auth.getClient();
+        const sheets = google.sheets('v4');
         
-        // 10. Prepare row data
         const rowData = [
             sanitizedData.timestamp,
             sanitizedData.area,
@@ -97,23 +73,20 @@ exports.handler = async (event, context) => {
             sanitizedData.contactEmail
         ];
 
-        // 11. Append to sheet with timeout
-        const appendPromise = sheets.spreadsheets.values.append({
-            spreadsheetId: process.env.GOOGLE_SHEET_ID,
-            range: 'MancorpForm!A:F',
+        console.log('Attempting to append data to sheet...');
+        
+        const appendResult = await sheets.spreadsheets.values.append({
+            auth: client,
+            spreadsheetId: '1TZHLzn02cE_WnkzZSnvEvZcpBWVP5Atx9l4x4jopPho',
+            range: 'MancorpForm!A2:F',
             valueInputOption: 'USER_ENTERED',
-            requestBody: {
+            resource: {
                 values: [rowData]
             }
         });
 
-        // Add timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 10000)
-        );
-
-        await Promise.race([appendPromise, timeoutPromise]);
-
+        console.log('Data successfully appended');
+        
         return {
             statusCode: 200,
             headers,
@@ -130,15 +103,6 @@ exports.handler = async (event, context) => {
             name: error.name
         });
 
-        // 12. Better error classification
-        if (error.message === 'Request timeout') {
-            return {
-                statusCode: 504,
-                headers,
-                body: JSON.stringify({ error: 'Request timed out' })
-            };
-        }
-
         if (error.message.includes('parse')) {
             return {
                 statusCode: 400,
@@ -147,7 +111,6 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Default error response
         return {
             statusCode: 500,
             headers,
