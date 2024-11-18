@@ -66,13 +66,13 @@ class TypeformQuestions {
             <div class="question-container">
                 <!-- Question 1: Text Input -->
                 <div class="question-slide" data-question="1">
-                    <h1 class="question">Please state the area that needs immediate attention.</h1>
+                    <h1 class="question">Please state your Company Name.</h1>
                     <div class="text-input-container">
                         <input type="text" 
                                id="area" 
                                name="area" 
                                class="text-input" 
-                               placeholder="For example - Training Room 1, Executive Conference Room, Site Director's Office, Female Bathroom"
+                               placeholder="Company Name"
                                required>
                         <button class="continue-btn" data-for="area">Continue</button>
                     </div>
@@ -154,7 +154,7 @@ class TypeformQuestions {
                                id="contact-email" 
                                name="contactEmail" 
                                class="text-input" 
-                               placeholder="Your email address (optional)">
+                               placeholder="Your email address ">
                                
                         <button class="submit-btn" type="submit">Submit</button>
                     </div>
