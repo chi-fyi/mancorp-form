@@ -1,12 +1,16 @@
 const { google } = require('googleapis');
 
 exports.handler = async (event, context) => {
-    // Enable CORS
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-    };
+    console.log('Environment Variables Check:', {
+        hasClientEmail: !!process.env.GOOGLE_CLIENT_EMAIL,
+        hasPrivateKey: !!process.env.GOOGLE_PRIVATE_KEY,
+        hasSheetId: !!process.env.GOOGLE_SHEET_ID,
+        // Print first few characters to verify format without exposing full values
+        clientEmailStart: process.env.GOOGLE_CLIENT_EMAIL?.substring(0, 5),
+        privateKeyStart: process.env.GOOGLE_PRIVATE_KEY?.substring(0, 20),
+        sheetIdStart: process.env.GOOGLE_SHEET_ID?.substring(0, 5)
+    });
+    // ... rest of your code
 
     // Handle preflight requests
     if (event.httpMethod === 'OPTIONS') {
