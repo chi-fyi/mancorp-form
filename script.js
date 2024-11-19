@@ -88,7 +88,7 @@ class TypeformQuestions {
                             <span>Spill Clean Up - Liquid</span>
                         </label>
 
-                        <input type="radio" id="solids" name="cleaningType" value="solids">
+                        <input type="radio" id="solids" name="cleaningType" value="Spill Clean Up - Solids">
                         <label class="radio-option" for="solids">
                             <div class="radio-label">B</div>
                             <span>Spill Clean Up - Solids</span>
